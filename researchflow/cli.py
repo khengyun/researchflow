@@ -12,6 +12,13 @@ from .scan import scan_runs
 from .search import search_experiments
 from .schema import new_experiment_record, utc_now
 from .store import init_project, load_experiments, next_numeric_id, save_experiment
+from .vector_search import (
+    DEFAULT_VECTOR_MODEL,
+    VectorSearchUnavailable,
+    build_vector_index,
+    vector_index_status,
+    vector_search_experiments,
+)
 
 
 def _root(args: argparse.Namespace) -> Path:
@@ -38,6 +45,7 @@ def cmd_status(args: argparse.Namespace) -> dict[str, Any]:
         "experiments": len(experiments),
         "validation_ok": validation["ok"],
         "errors": validation["errors"][:10],
+        "vector_index": vector_index_status(root),
         "latest": [
             {
                 "id": item.get("id"),
@@ -52,6 +60,28 @@ def cmd_status(args: argparse.Namespace) -> dict[str, Any]:
 
 def cmd_search(args: argparse.Namespace) -> dict[str, Any]:
     return {"results": search_experiments(_root(args), args.query, limit=args.limit)}
+
+
+def cmd_build_vector_index(args: argparse.Namespace) -> dict[str, Any]:
+    try:
+        return build_vector_index(
+            _root(args),
+            model_name=args.model,
+            reset=args.reset,
+            batch_size=args.batch_size,
+        )
+    except VectorSearchUnavailable as exc:
+        return {"ok": False, "error": str(exc), "install": 'pip install "researchflow[vector]"'}
+
+
+def cmd_vector_search(args: argparse.Namespace) -> dict[str, Any]:
+    try:
+        return {
+            "ok": True,
+            "results": vector_search_experiments(_root(args), args.query, limit=args.limit, model_name=args.model),
+        }
+    except VectorSearchUnavailable as exc:
+        return {"ok": False, "error": str(exc), "install": 'pip install "researchflow[vector]"', "results": []}
 
 
 def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
@@ -93,6 +123,12 @@ def cmd_close_session(args: argparse.Namespace) -> dict[str, Any]:
     init_project(root)
     scan_result = scan_runs(root)
     index_result = write_indexes(root)
+    vector_result: dict[str, Any] | None = None
+    if getattr(args, "build_vector_index", False):
+        try:
+            vector_result = build_vector_index(root, model_name=getattr(args, "vector_model", DEFAULT_VECTOR_MODEL))
+        except VectorSearchUnavailable as exc:
+            vector_result = {"ok": False, "error": str(exc), "install": 'pip install "researchflow[vector]"'}
     validation = validate_graph(root)
     session_id = "SESSION-" + utc_now().replace(":", "").replace("+", "Z")
     session = {
@@ -101,6 +137,7 @@ def cmd_close_session(args: argparse.Namespace) -> dict[str, Any]:
         "summary": args.summary or "",
         "scan": scan_result,
         "indexes": index_result,
+        "vector_index": vector_result,
         "validation": validation,
     }
     session_path = root / ".researchflow" / "sessions" / f"{session_id}.json"
@@ -128,6 +165,24 @@ def build_parser() -> argparse.ArgumentParser:
     search.add_argument("query")
     search.add_argument("--limit", type=int, default=10)
     search.set_defaults(func=cmd_search)
+
+    build_vector = sub.add_parser("build-vector-index")
+    build_vector.add_argument("--model", default=DEFAULT_VECTOR_MODEL)
+    build_vector.add_argument("--batch-size", type=int, default=32)
+    build_vector.add_argument("--reset", action="store_true")
+    build_vector.set_defaults(func=cmd_build_vector_index)
+
+    vector_search = sub.add_parser("vector-search")
+    vector_search.add_argument("query")
+    vector_search.add_argument("--limit", type=int, default=10)
+    vector_search.add_argument("--model", default=DEFAULT_VECTOR_MODEL)
+    vector_search.set_defaults(func=cmd_vector_search)
+
+    similar = sub.add_parser("similar")
+    similar.add_argument("query")
+    similar.add_argument("--limit", type=int, default=10)
+    similar.add_argument("--model", default=DEFAULT_VECTOR_MODEL)
+    similar.set_defaults(func=cmd_vector_search)
 
     trace_parser = sub.add_parser("trace")
     trace_parser.add_argument("ref")
@@ -159,6 +214,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     close = sub.add_parser("close-session")
     close.add_argument("--summary")
+    close.add_argument("--build-vector-index", action="store_true")
+    close.add_argument("--vector-model", default=DEFAULT_VECTOR_MODEL)
     close.set_defaults(func=cmd_close_session)
     return parser
 

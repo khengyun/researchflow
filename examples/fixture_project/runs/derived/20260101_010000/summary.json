@@ -1,0 +1,7 @@
+{
+  "version": "0.2.0",
+  "timestamp": "20260101_010000",
+  "run_dir": "runs/derived/20260101_010000",
+  "val_mae": 8.0,
+  "val_loss": 0.8
+}

@@ -1,0 +1,9 @@
+{
+  "version": "0.2.0",
+  "name": "derived",
+  "gpu_id": "0",
+  "model": {
+    "model_id": "example/model-small",
+    "baseline_adapter_dir": "runs/baseline/20260101_000000/adapter"
+  }
+}

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "researchflow"
+version = "0.1.0"
+description = "Codex-native local research experiment management."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "ResearchFlow" }]
+dependencies = []
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=6.0"]
+
+[project.scripts]
+rf = "researchflow.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["researchflow"]

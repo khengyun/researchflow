@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "researchflow": {
+      "command": "python3",
+      "args": [
+        "${PLUGIN_ROOT}/researchflow/mcp_server.py",
+        "--stdio"
+      ]
+    }
+  }
+}

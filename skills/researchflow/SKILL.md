@@ -26,6 +26,8 @@ of a research session.
 ```bash
 python3 -m researchflow.cli status
 python3 -m researchflow.cli search "<user intent or method>"
+python3 -m researchflow.cli build-vector-index
+python3 -m researchflow.cli similar "<semantic description of prior work>"
 python3 -m researchflow.cli scan
 python3 -m researchflow.cli trace EXP-0001
 python3 -m researchflow.cli compare EXP-a EXP-b
@@ -36,13 +38,15 @@ If the package is installed, `rf` may be used instead.
 
 ## Workflow
 
-1. At task start, run `status` and a targeted `search`.
+1. At task start, run `status` and `similar` for semantic prior work. Fall back
+   to targeted `search` for exact IDs, versions, metrics, and artifact paths.
 2. Before proposing or launching a new experiment, find similar prior work.
 3. After a run, run `scan`, then compare the new experiment against its parent
    or cited baseline.
 4. When drawing conclusions, create or update a research state that cites the
    supporting experiments.
-5. Before ending the session, run `close-session`.
+5. Before ending the session, run `build-vector-index` when vector dependencies
+   are available, then run `close-session`.
 
 ## References
 

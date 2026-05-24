@@ -16,6 +16,8 @@ python3 -m researchflow.cli init
 python3 -m researchflow.cli scan
 python3 -m researchflow.cli status
 python3 -m researchflow.cli search "log residual"
+python3 -m researchflow.cli build-vector-index
+python3 -m researchflow.cli similar "failed lora ablation"
 python3 -m researchflow.cli trace EXP-abc123
 python3 -m researchflow.cli compare EXP-a EXP-b
 python3 -m researchflow.cli close-session --summary "Finished v0.5 ablation review"
@@ -62,6 +64,7 @@ ResearchFlow writes only under the target repo by default:
 
 ```text
 .researchflow/
+  .gitignore
   project.json
   experiments/
   states/
@@ -71,3 +74,30 @@ ResearchFlow writes only under the target repo by default:
 ```
 
 JSON is the guaranteed format. YAML files are read if `PyYAML` is available.
+
+## Semantic Search
+
+ResearchFlow can add a local semantic index over experiment records only. The
+experiment JSON remains the source of truth; ChromaDB is a rebuildable cache
+stored under `.researchflow/indexes/chroma/`.
+
+Install optional dependencies:
+
+```bash
+pip install "researchflow[vector]"
+```
+
+Build or refresh the index:
+
+```bash
+python3 -m researchflow.cli build-vector-index
+```
+
+Search semantically:
+
+```bash
+python3 -m researchflow.cli similar "experiments that improved validation MAE but regressed edges"
+```
+
+Codex hooks try semantic search on each user prompt and fall back to lexical
+`search` when the vector dependencies or index are unavailable.

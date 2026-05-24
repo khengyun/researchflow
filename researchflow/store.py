@@ -36,6 +36,9 @@ def init_project(root: Path, *, name: str | None = None) -> dict[str, Any]:
     dirs = project_dirs(root)
     for path in dirs.values():
         path.mkdir(parents=True, exist_ok=True)
+    gitignore_path = dirs["base"] / ".gitignore"
+    if not gitignore_path.exists():
+        gitignore_path.write_text("indexes/chroma/\n")
     project_path = dirs["base"] / "project.json"
     if project_path.exists():
         return load_data(project_path)

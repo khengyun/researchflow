@@ -10,6 +10,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from researchflow.cli import (  # noqa: E402
+    cmd_build_vector_index,
     cmd_close_session,
     cmd_compare,
     cmd_init,
@@ -18,7 +19,9 @@ from researchflow.cli import (  # noqa: E402
     cmd_status,
     cmd_trace,
     cmd_validate,
+    cmd_vector_search,
 )
+from researchflow.vector_search import DEFAULT_VECTOR_MODEL  # noqa: E402
 from researchflow.render import show_experiment  # noqa: E402
 
 
@@ -71,6 +74,33 @@ def tools_list() -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "find_similar_experiments",
+            "description": "Semantic vector search over experiment records using local ChromaDB and sentence-transformers.",
+            "inputSchema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                    "root": schema_root,
+                    "query": {"type": "string"},
+                    "limit": {"type": "integer"},
+                    "model": {"type": "string"},
+                },
+            },
+        },
+        {
+            "name": "build_vector_index",
+            "description": "Build or refresh the local semantic vector index for experiment records.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "root": schema_root,
+                    "model": {"type": "string"},
+                    "batch_size": {"type": "integer"},
+                    "reset": {"type": "boolean"},
+                },
+            },
+        },
+        {
             "name": "trace_experiment",
             "description": "Trace ancestors and descendants for an experiment id or version.",
             "inputSchema": {
@@ -96,7 +126,15 @@ def tools_list() -> list[dict[str, Any]]:
         {
             "name": "close_session",
             "description": "Scan runs, rebuild indexes, validate, and write a session record.",
-            "inputSchema": {"type": "object", "properties": {"root": schema_root, "summary": {"type": "string"}}},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "root": schema_root,
+                    "summary": {"type": "string"},
+                    "build_vector_index": {"type": "boolean"},
+                    "vector_model": {"type": "string"},
+                },
+            },
         },
     ]
 
@@ -111,6 +149,26 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         return _tool_result(_call(cmd_scan, root=root, run_root=arguments.get("run_root")))
     if name == "search_experiments":
         return _tool_result(_call(cmd_search, root=root, query=arguments["query"], limit=int(arguments.get("limit", 10))))
+    if name == "find_similar_experiments":
+        return _tool_result(
+            _call(
+                cmd_vector_search,
+                root=root,
+                query=arguments["query"],
+                limit=int(arguments.get("limit", 10)),
+                model=arguments.get("model") or DEFAULT_VECTOR_MODEL,
+            )
+        )
+    if name == "build_vector_index":
+        return _tool_result(
+            _call(
+                cmd_build_vector_index,
+                root=root,
+                model=arguments.get("model") or DEFAULT_VECTOR_MODEL,
+                batch_size=int(arguments.get("batch_size", 32)),
+                reset=bool(arguments.get("reset", False)),
+            )
+        )
     if name == "trace_experiment":
         return _tool_result(_call(cmd_trace, root=root, ref=arguments["ref"]))
     if name == "compare_experiments":
@@ -118,7 +176,15 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if name == "validate_graph":
         return _tool_result(_call(cmd_validate, root=root))
     if name == "close_session":
-        return _tool_result(_call(cmd_close_session, root=root, summary=arguments.get("summary")))
+        return _tool_result(
+            _call(
+                cmd_close_session,
+                root=root,
+                summary=arguments.get("summary"),
+                build_vector_index=bool(arguments.get("build_vector_index", False)),
+                vector_model=arguments.get("vector_model") or DEFAULT_VECTOR_MODEL,
+            )
+        )
     raise ValueError(f"unknown tool: {name}")
 
 
@@ -158,11 +224,11 @@ def prompts_list() -> list[dict[str, Any]]:
 
 def get_prompt(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if name == "search_prior_work":
-        text = "Before proposing new work, call search_experiments and find_similar-style queries for prior experiments, failed attempts, related metrics, and cited prompts."
+        text = "Before proposing new work, call find_similar_experiments for semantic prior work, then search_experiments for exact versions, metrics, artifact paths, and IDs. Trace or compare relevant experiments before planning."
     elif name == "plan_experiment":
         text = "Create a planned experiment record with parents/cites, hypothesis, expected improvements, possible regressions, artifacts to collect, and stop criteria."
     elif name == "close_research_session":
-        text = "Run scan_runs, validate_graph, build indexes via close_session, then summarize created/updated experiments and unresolved metadata gaps."
+        text = "Run scan_runs, validate_graph, build indexes via close_session, refresh build_vector_index when vector dependencies are available, then summarize created/updated experiments and unresolved metadata gaps."
     else:
         raise ValueError(f"unknown prompt: {name}")
     return {"messages": [{"role": "user", "content": {"type": "text", "text": text}}]}

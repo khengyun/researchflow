@@ -5,7 +5,7 @@ ResearchFlow is a Codex-native plugin for managing research experiments as local
 ## Install in Codex Desktop
 
 Use Codex Desktop's **Add marketplace** flow with the repository root as the
-marketplace root:
+marketplace source:
 
 ```text
 Source: https://github.com/khengyun/researchflow.git
@@ -13,16 +13,31 @@ Git ref: main
 Sparse paths: leave blank
 ```
 
-Do not set `Sparse paths` to `plugins/codex`. This repository does not contain
-that path, and sparse-checking only a plugin subdirectory would omit the
-marketplace manifest that Codex Desktop looks for.
+Codex recognizes the marketplace manifest at:
+
+```text
+.agents/plugins/marketplace.json
+```
+
+Do not use `plugins/codex`; this repository does not contain that path.
+
+If you want to use sparse checkout, use exactly these two sparse paths:
+
+```text
+.agents/plugins/marketplace.json
+plugins/researchflow
+```
 
 This repo supports both layouts:
 
-- Marketplace root: `marketplace.json` at the repo root lists the
+- Marketplace manifest: `.agents/plugins/marketplace.json` lists the
   `researchflow` plugin at `./plugins/researchflow`.
 - Plugin root: the repo root still contains `.codex-plugin/plugin.json` for
   direct plugin-root workflows.
+
+The root `marketplace.json` is kept only as a backward/reference copy. The
+manifest accepted by `codex plugin marketplace add` is
+`.agents/plugins/marketplace.json`.
 
 After adding the marketplace, install or enable the `researchflow` plugin from
 the marketplace list.
@@ -52,11 +67,11 @@ The default project root is the current directory. Use `--root /path/to/repo` fo
 
 ## Codex Plugin Development
 
-This repository is both a marketplace root and a plugin root. The marketplace
+This repository is both a marketplace source and a plugin root. The marketplace
 manifest is:
 
 ```text
-marketplace.json
+.agents/plugins/marketplace.json
 ```
 
 It points to the installable plugin copy:

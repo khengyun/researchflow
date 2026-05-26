@@ -2,6 +2,31 @@
 
 ResearchFlow is a Codex-native plugin for managing research experiments as local, Git-friendly records. It is agent-first: Codex can scan experiment runs, search prior work, trace lineage, compare experiments, and close sessions into `.researchflow/`.
 
+## Install in Codex Desktop
+
+Use Codex Desktop's **Add marketplace** flow with the repository root as the
+marketplace root:
+
+```text
+Source: https://github.com/khengyun/researchflow.git
+Git ref: main
+Sparse paths: leave blank
+```
+
+Do not set `Sparse paths` to `plugins/codex`. This repository does not contain
+that path, and sparse-checking only a plugin subdirectory would omit the
+marketplace manifest that Codex Desktop looks for.
+
+This repo supports both layouts:
+
+- Marketplace root: `marketplace.json` at the repo root lists the
+  `researchflow` plugin at `./plugins/researchflow`.
+- Plugin root: the repo root still contains `.codex-plugin/plugin.json` for
+  direct plugin-root workflows.
+
+After adding the marketplace, install or enable the `researchflow` plugin from
+the marketplace list.
+
 ## What It Tracks
 
 - Experiments and run artifacts
@@ -27,7 +52,26 @@ The default project root is the current directory. Use `--root /path/to/repo` fo
 
 ## Codex Plugin Development
 
-This repository is itself the plugin root. For local Codex testing, create a marketplace in another repo:
+This repository is both a marketplace root and a plugin root. The marketplace
+manifest is:
+
+```text
+marketplace.json
+```
+
+It points to the installable plugin copy:
+
+```text
+plugins/researchflow/
+```
+
+The repo root also remains a direct plugin root for development workflows:
+
+```text
+.codex-plugin/plugin.json
+```
+
+For local Codex testing from a separate marketplace, use this entry shape:
 
 ```json
 {

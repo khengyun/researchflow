@@ -1,0 +1,19 @@
+{
+  "name": "researchflow",
+  "version": "0.1.0",
+  "description": "Codex-native research experiment management for lineage, evidence, and session state.",
+  "author": {
+    "name": "ResearchFlow"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "ResearchFlow",
+    "shortDescription": "Manage research experiments, lineage, prompts, states, and artifacts.",
+    "longDescription": "ResearchFlow gives Codex a local-first experiment memory: scan runs, search prior work, trace experiment lineage, compare metrics/configs, and close research sessions into Git-friendly records.",
+    "developerName": "ResearchFlow",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": "Use ResearchFlow to inspect prior experiments before planning new research work, then close the session when done."
+  },
+  "mcpServers": "./.mcp.json"
+}

@@ -5,7 +5,7 @@ ResearchFlow is a Codex-native plugin for managing research experiments as local
 ## Install in Codex Desktop
 
 Use Codex Desktop's **Add marketplace** flow with the repository root as the
-marketplace root:
+marketplace source:
 
 ```text
 Source: https://github.com/khengyun/researchflow.git
@@ -21,9 +21,10 @@ This repo supports both layouts:
 
 - Marketplace root: `marketplace.json` at the repo root lists the
   `researchflow` plugin at `./plugins/researchflow`.
+- Agent layout mirror: `.agents/plugins/marketplace.json` mirrors the same
+  marketplace manifest for agent-oriented paths.
 - Plugin root: the repo root still contains `.codex-plugin/plugin.json` for
   direct plugin-root workflows.
-
 After adding the marketplace, install or enable the `researchflow` plugin from
 the marketplace list.
 
